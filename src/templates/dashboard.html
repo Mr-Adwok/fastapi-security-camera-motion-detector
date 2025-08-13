@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Security Camera Dashboard</title>
+    <style>
+        :root {
+            --bg: #0b0d10;
+            --panel: #12161b;
+            --muted: #8b95a7;
+            --text: #e7edf6;
+            --ok: #1f9d55;
+            --alert: #e02424;
+            --border: #1e2530;
+            --chip: #0f1318;
+        }
+
+        @media (prefers-color-scheme: light) {
+            :root {
+                --bg: #f5f7fb;
+                --panel: #fff;
+                --text: #0b0d10;
+                --muted: #5b6574;
+                --border: #e8ecf3;
+                --chip: #f2f5fa;
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family:
+                system-ui,
+                -apple-system,
+                "Segoe UI",
+                Roboto,
+                Inter,
+                sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        header {
+            max-width: 1000px;
+            margin: 24px auto 12px;
+            padding: 0 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #6aa3ff, #8b5cf6);
+            box-shadow: 0 6px 20px rgba(104, 128, 255, 0.35);
+        }
+
+        h1 {
+            font-size: 18px;
+            margin: 0;
+            font-weight: 650;
+            letter-spacing: 0.2px;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: var(--chip);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: var(--muted);
+        }
+
+        .dot.ok {
+            background: var(--ok);
+        }
+
+        .dot.alert {
+            background: var(--alert);
+            animation: pulse 1.2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.35);
+                opacity: 0.6;
+            }
+        }
+
+        main {
+            max-width: 1000px;
+            margin: 0 auto 40px;
+            padding: 0 16px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+
+        @media (min-width: 920px) {
+            .grid {
+                grid-template-columns: 2fr 1fr;
+            }
+        }
+
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+        }
+
+        .card h2 {
+            margin: 0;
+            padding: 14px 16px;
+            font-size: 15px;
+            letter-spacing: 0.2px;
+            color: var(--muted);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .video-wrap {
+            display: block;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background: #000;
+        }
+
+        .video-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .status-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            padding: 12px 16px;
+            border-top: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 13px;
+            justify-content: space-between;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: var(--chip);
+            border: 1px solid var(--border);
+        }
+
+        .list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            max-height: 420px;
+            overflow: auto;
+        }
+
+        .list li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+
+        .stamp {
+            margin-left: auto;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        footer {
+            color: var(--muted);
+            text-align: center;
+            font-size: 12px;
+            padding: 16px;
+        }
+
+        a {
+            color: inherit;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="brand">
+            <div class="logo" aria-hidden="true"></div>
+            <div>
+                <h1>Security Camera Dashboard</h1>
+                <div class="chip">
+                    <span class="dot ok" id="serverDot"></span><span id="serverText">Server online</span>
+                </div>
+            </div>
+        </div>
+        <div class="chip" id="recordingChip">
+            <span class="dot" id="recordingDot"></span>
+            <span id="recordingText">Idle</span>
+        </div>
+    </header>
+
+    <main>
+        <div class="grid">
+            <!-- Live video -->
+            <section class="card" aria-label="Live Camera">
+                <h2>Live Feed</h2>
+                <div class="video-wrap">
+                    <!-- FastAPI endpoint that streams MJPEG -->
+                    <img id="cameraFeed" src="" alt="Live camera feed" />
+                </div>
+                <div class="status-row">
+                    <div class="status-pill">
+                        <span class="dot" id="motionDot"></span>
+                        <span id="motionText">No motion</span>
+                    </div>
+                    <div class="status-pill">
+                        <span class="dot" id="fpsDot"></span>
+                        <span id="fpsText">Streaming…</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Events -->
+            <aside class="card" aria-label="Motion Events">
+                <h2>Motion Events</h2>
+                <ul class="list" id="eventList">
+                    <!-- Populated by JS -->
+                </ul>
+            </aside>
+        </div>
+    </main>
+
+    <footer>
+        fastapi-security-camera-motion-detector &middot; Auto-records on PIR
+        motion
+    </footer>
+
+    <script>
+        // Poll motion status; if you switch to WebSockets later, replace this.
+
+        let lastState = { motion: false };
+
+
+
+        const ws = new WebSocket("ws://192.168.1.69:8000/ws/live-feed");
+        const img = document.getElementById("cameraFeed");
+
+        ws.binaryType = "arraybuffer";
+
+        ws.onmessage = function (event) {
+            console.log(event)
+            const blob = new Blob([event.data], { type: "image/jpeg" });
+            const url = URL.createObjectURL(blob);
+            img.src = url;
+
+            // Release the previous object URL to avoid memory leak
+            if (img._prevUrl) {
+                URL.revokeObjectURL(img._prevUrl);
+            }
+            img._prevUrl = url;
+        };
+    </script>
+</body>
+
+</html>
