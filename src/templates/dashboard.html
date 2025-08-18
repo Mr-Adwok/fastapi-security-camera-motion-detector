@@ -278,28 +278,69 @@
     </footer>
 
     <script>
-        // Poll motion status; if you switch to WebSockets later, replace this.
-
-        let lastState = { motion: false };
-
-
-
-        const ws = new WebSocket("ws://192.168.1.69:8000/ws/live-feed");
+        const ws = new WebSocket("ws://192.168.50.80:8000/ws/live-feed");
         const img = document.getElementById("cameraFeed");
-
-        ws.binaryType = "arraybuffer";
+        const eventList = document.getElementById("eventList");
+        const motionDot = document.getElementById("motionDot");
+        const motionText = document.getElementById("motionText");
 
         ws.onmessage = function (event) {
-            console.log(event)
-            const blob = new Blob([event.data], { type: "image/jpeg" });
-            const url = URL.createObjectURL(blob);
-            img.src = url;
+            try {
 
-            // Release the previous object URL to avoid memory leak
-            if (img._prevUrl) {
-                URL.revokeObjectURL(img._prevUrl);
+                const data = JSON.parse(event.data);
+                console.log(data);
+
+                // --- Handle Frame ---
+                if (data.frame) {
+                    const byteCharacters = atob(data.frame); // base64 decode
+                    const byteNumbers = new Array(byteCharacters.length);
+                    for (let i = 0; i < byteCharacters.length; i++) {
+                        byteNumbers[i] = byteCharacters.charCodeAt(i);
+                    }
+                    const byteArray = new Uint8Array(byteNumbers);
+                    const blob = new Blob([byteArray], { type: "image/jpeg" });
+                    const url = URL.createObjectURL(blob);
+                    img.src = url;
+
+                    // Prevent memory leaks
+                    if (img._prevUrl) {
+                        URL.revokeObjectURL(img._prevUrl);
+                    }
+                    img._prevUrl = url;
+                }
+
+                // --- Handle ESP Message ---
+                if (data.message) {
+                    console.log("ESP:", data.message);
+
+                    // Example: if ESP sends "motion_detected"
+                    const li = document.createElement("li");
+                    li.textContent = data.message;
+                    const stamp = document.createElement("span");
+                    stamp.className = "stamp";
+                    stamp.textContent = new Date().toLocaleTimeString();
+                    li.appendChild(stamp);
+                    eventList.prepend(li);
+
+                    if (data.message.toLowerCase().includes("motion")) {
+                        motionDot.classList.add("alert");
+                        motionText.textContent = "Motion detected";
+                    } else {
+                        motionDot.classList.remove("alert");
+                        motionText.textContent = "No motion";
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to parse message:", err);
             }
-            img._prevUrl = url;
+        };
+
+        ws.onopen = () => {
+            console.log("WebSocket connected");
+        };
+
+        ws.onclose = () => {
+            console.log("WebSocket closed");
         };
     </script>
 </body>
